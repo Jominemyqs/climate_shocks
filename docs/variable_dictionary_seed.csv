@@ -1,0 +1,16 @@
+variable,description,source
+events_drought,Number of drought events (EM-DAT),EM-DAT
+events_flood,Number of flood events (EM-DAT),EM-DAT
+events_hurricane,Number of hurricane/tropical cyclone events (EM-DAT),EM-DAT
+deaths_drought,Total deaths from drought events,EM-DAT
+deaths_flood,Total deaths from flood events,EM-DAT
+deaths_hurricane,Total deaths from hurricane events,EM-DAT
+affected_drought,People affected by drought events,EM-DAT
+affected_flood,People affected by flood events,EM-DAT
+affected_hurricane,People affected by hurricane events,EM-DAT
+int_disp_drought,New internal displacements due to drought,IDMC
+int_disp_flood,New internal displacements due to flood,IDMC
+int_disp_hurricane,New internal displacements due to hurricanes,IDMC
+asylum_apps,Total asylum applications (all destinations),UNHCR
+diaspora_US,Migrant stock in United States (placeholder),UN DESA
+diaspora_ESP,Migrant stock in Spain (placeholder),UN DESA
