@@ -1,0 +1,395 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+  11pt,
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{5}
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={Climate Shocks and Migration Patterns},
+  pdfauthor={C. Roig, Q. Yu, C. Williams},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Climate Shocks and Migration Patterns}
+\author{C. Roig, Q. Yu, C. Williams}
+\date{2025-07-20}
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{2}
+\tableofcontents
+}
+\subsection{2 Data}\label{data}
+
+\subsubsection{2.1 Population of Interest and
+Sample}\label{population-of-interest-and-sample}
+
+Our analysis focuses on residents of Latin America and the Caribbean
+(LAC) who may be displaced---internally or across borders---by
+climate-related natural disasters.\\
+We assemble a balanced country--year panel covering \textbf{32 sovereign
+LAC countries} (listed in Appendix A) observed annually from
+\textbf{2008 through 2023}. The starting year is chosen because
+systematic disaster-displacement reporting by IDMC and asylum-flow
+reporting by UNHCR both stabilize after 2007, while EM-DAT event
+coverage remains complete.\\
+With 16 years for each country, the final dataset contains \textbf{512
+country-year observations} (32 × 16), providing enough time-series
+variation to identify both short-run (sudden-onset) and lagged
+(slow-onset) disaster effects on migration outcomes.
+
+\begin{longtable}[]{@{}ll@{}}
+\caption{Appendix A: LAC countries included in the panel
+(2008--2023)}\tabularnewline
+\toprule\noalign{}
+ISO-3 & Country \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+ISO-3 & Country \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+ATG & Antigua \& Barbuda \\
+ARG & Argentina \\
+BHS & Bahamas \\
+BRB & Barbados \\
+BLZ & Belize \\
+BOL & Bolivia \\
+BRA & Brazil \\
+CHL & Chile \\
+COL & Colombia \\
+CRI & Costa Rica \\
+CUB & Cuba \\
+DOM & Dominican Republic \\
+ECU & Ecuador \\
+SLV & El Salvador \\
+GRD & Grenada \\
+GTM & Guatemala \\
+GUY & Guyana \\
+HTI & Haiti \\
+HND & Honduras \\
+JAM & Jamaica \\
+MEX & Mexico \\
+NIC & Nicaragua \\
+PAN & Panama \\
+PRY & Paraguay \\
+PER & Peru \\
+KNA & St.~Kitts \& Nevis \\
+LCA & St.~Lucia \\
+VCT & St.~Vincent \& Grenadines \\
+SUR & Suriname \\
+TTO & Trinidad \& Tobago \\
+URY & Uruguay \\
+VEN & Venezuela \\
+\end{longtable}
+
+\subsubsection{2.2 Data Sources}\label{data-sources}
+
+We integrate five complementary datasets to capture disaster exposure,
+forced-movement flows, and macro-socio-economic context (Table 1). All
+sources provide annual country-level data and cover the full 2008--2023
+study window.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.1654}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.1353}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.5865}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.1128}}@{}}
+\caption{Table 1: Primary data sources and variables
+used}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Dataset
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Temporal Coverage
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Key Variables (this study)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Original Freq.
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Dataset
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Temporal Coverage
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Key Variables (this study)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Original Freq.
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+EM-DAT -- CRED & 2008--2023 & Events, deaths, affected (drought / flood
+/ hurricane) & Event → Year \\
+IDMC & 2008--2023 & New internal displacements (hazard-specific) & Event
+→ Year \\
+UNHCR Asylum & 2008--2023 & Asylum applications by country of origin &
+Annual \\
+World Bank WDI & 2008--2023 & GDP pc, agriculture VA \%, unemployment
+\%, remittances \% GDP, population, Gini & Annual \\
+UN DESA (placeholder) & 2020 snapshot & Migrant stock in U.S. / Spain
+(diaspora proxy -- pending parse) & 5-year \\
+\end{longtable}
+
+\emph{Brief source descriptions:} \textbf{EM-DAT} records individual
+disaster events worldwide; we keep events tagged \emph{Drought},
+\emph{Flood}, and \emph{Storm} and flag hurricanes via subtype keywords
+(``hurricane'', ``tropical cyclone'', etc.). \textbf{IDMC} reports
+\emph{new} internal displacements for each disaster, which we aggregate
+by country--year and hazard. \textbf{UNHCR} supplies annual
+asylum-application counts by country of origin, summed across all
+destinations. \textbf{World Bank WDI} contributes socio-economic
+controls---constant-price GDP per capita, agriculture value-added \%,
+unemployment \%, remittances \% GDP, population, and (where available)
+the Gini index. \textbf{UN DESA} migrant-stock data will later proxy
+diaspora networks; columns are currently retained as placeholders
+pending full parse.
+
+\subsubsection{2.3 Data Cleaning and
+Merging}\label{data-cleaning-and-merging}
+
+We harmonise the five sources into a balanced panel through four key
+steps:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Master skeleton.} We generate a country--year grid
+  (\texttt{32\ countries\ ×\ 2008–2023}) to ensure every observation is
+  represented, even if a source reports zero events.
+\item
+  \textbf{Source-specific filtering \& aggregation.}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    \emph{EM-DAT}: keep LAC ISO-3 codes; aggregate event counts, deaths,
+    and affected people by hazard and year.\\
+  \item
+    \emph{IDMC}: drop the metadata header row, parse numeric
+    displacement counts, map hazards (Storm → hurricane), aggregate to
+    yearly totals.\\
+  \item
+    \emph{UNHCR}: verify ``Country of Origin'' dimension, sum asylum
+    applications across destinations per origin-year.\\
+  \item
+    \emph{WDI}: convert ISO-2 to ISO-3, select controls, keep study
+    years.\\
+  \item
+    \emph{UN DESA}: placeholder columns (\texttt{diaspora\_US},
+    \texttt{diaspora\_ESP}) are merged but currently NAs.
+  \end{itemize}
+\item
+  \textbf{Sequential left-joins.} We merge each tidy dataset onto the
+  skeleton in the order \textbf{EM-DAT → IDMC → UNHCR → WDI → DESA},
+  replacing missing \emph{count} variables with 0 yet leaving
+  socio-economic controls as NA for later imputation or flagging.
+\item
+  \textbf{Constructed variables.} After merging we compute totals (e.g.,
+  \texttt{total\_events}, \texttt{total\_int\_disp}), per-capita flows
+  (\texttt{*\_pc100k}), log-transforms (\texttt{log1p}) to handle zero
+  inflation, lagged disaster measures, and preliminary
+  drought-persistence indicators. The resulting file,
+  \texttt{panel\_merged\_wide.csv}, contains 512 balanced observations
+  with all variables ready for econometric analysis.
+\end{enumerate}
+
+\subsubsection{2.4 Constructed Variables}\label{constructed-variables}
+
+From the merged panel we derive five families of analysis-ready
+variables.\\
+\emph{Hazard frequency \& impact:} \texttt{events\_drought},
+\texttt{events\_flood}, \texttt{events\_hurricane}, plus corresponding
+\texttt{deaths\_*} and \texttt{affected\_*}.\\
+\emph{Displacement outcomes:} \texttt{int\_disp\_drought},
+\texttt{int\_disp\_flood}, \texttt{int\_disp\_hurricane}; their sum,
+\texttt{total\_int\_disp}; and \texttt{asylum\_apps}, the flow of
+international protection seekers.\\
+\emph{Scaling \& ratios:} per-capita flows
+(\texttt{asylum\_apps\_pc100k}, \texttt{int\_disp\_total\_pc100k}),
+hazard-impact intensities (\texttt{affected\_*\_pc},
+\texttt{deaths\_*\_pc}), the external-movement share
+\texttt{share\_external}, and the log ratio
+\texttt{log\_ext\_int\_ratio}.\\
+\emph{Transformations \& dynamics:} log(1 + x) versions of key counts,
+one-year lags (\texttt{lag\_*}) for migration and disaster variables,
+and a preliminary drought-persistence metric
+(\texttt{drought\_spell\_len}, counting consecutive drought years).\\
+\emph{Controls:} constant-price GDP per capita
+(\texttt{gdp\_pc\_const}), agriculture VA \% GDP, unemployment \%,
+remittances \% GDP, population (for scaling only), and the Gini index
+(with a missingness flag for robustness).
+
+\subsubsection{2.5 Linking Data to the Research
+Hypotheses}\label{linking-data-to-the-research-hypotheses}
+
+These variables map directly onto our hypotheses. \textbf{H1 (slow-onset
+↦ cross-border):} persistent drought measures (\texttt{events\_drought},
+\texttt{drought\_spell\_len}) should raise international flows
+(\texttt{log\_asylum\_apps}) more than internal displacement, and
+increase \texttt{share\_external}. \textbf{H2 (sudden-onset ↦
+internal):} flood and hurricane counts or affected-population rates are
+expected to spike \texttt{log\_int\_disp\_total} contemporaneously but
+have weaker or short-lived effects on asylum seeking. Socio-economic
+controls absorb macro shocks, while country and year fixed effects net
+out unobserved heterogeneity and global trends, allowing coefficients on
+hazard variables to capture the differential push factors our study
+seeks to quantify.
+
+\subsection{3 Econometric Framework}\label{econometric-framework}
+
+We estimate fixed-effects panel regressions to disentangle the effects
+of slow- versus sudden-onset disasters on (i) cross-border asylum
+outflows and (ii) internal disaster displacements.\\
+The two baseline equations are:
+
+\[
+\begin{aligned}
+\textsf{(A) International migration:}\qquad
+\ln\!\bigl(1+\text{Asylum}_{it}\bigr)
+      &= \alpha_i + \gamma_t
+      + \beta_1\,\text{Drought}_{it}
+      + \beta_2\,\text{Flood}_{it}
+      + \beta_3\,\text{Hurricane}_{it}
+      + \mathbf{\delta}'\mathbf X_{it}
+      + \varepsilon_{it},\\[6pt]
+\textsf{(B) Internal displacement:}\qquad
+\ln\!\bigl(1+\text{IntDisp}_{it}\bigr)
+      &= \alpha_i + \gamma_t
+      + \theta_1\,\text{Drought}_{it}
+      + \theta_2\,\text{Flood}_{it}
+      + \theta_3\,\text{Hurricane}_{it}
+      + \mathbf{\phi}'\mathbf X_{it}
+      + u_{it},
+\end{aligned}
+\]
+
+where:
+
+\begin{itemize}
+\tightlist
+\item
+  \(i\) indexes country, \(t\) indexes year (2008 -- 2023).\\
+\item
+  \(\alpha_i\) = country fixed effects; \(\gamma_t\) = year fixed
+  effects.\\
+\item
+  \(\text{Asylum}_{it}\) = annual asylum-application outflow;\\
+  \(\text{IntDisp}_{it}\) = new internal displacements.\\
+\item
+  Disaster regressors are annual \textbf{event counts}\\
+  \(\text{Drought}_{it}, \text{Flood}_{it}, \text{Hurricane}_{it}\);\\
+  robustness checks will swap in affected-population rates and lagged
+  drought persistence.\\
+\item
+  \(\mathbf X_{it}\) = vector of controls\\
+  \(\bigl[\ln(\text{GDPpc}),\; \text{Agriculture VA \%},\; \text{Unemployment \%},\; \text{Remittances \% GDP},\; \text{Gini} \bigr]\).\\
+\item
+  Errors \(\varepsilon_{it}, u_{it}\) are clustered at the country
+  level.
+\end{itemize}
+
+\begin{quote}
+\textbf{Identification logic.} Country FEs absorb time-invariant
+exposure (e.g., geography, institutions); year FEs absorb region-wide
+shocks (e.g., global commodity prices). Remaining variation in disaster
+counts is plausibly exogenous conditional on these effects and controls,
+allowing \(\beta_k\) and \(\theta_k\) to capture differential migration
+responses to each hazard type.
+\end{quote}
+
+A complementary specification models the \emph{relative} outcome:
+
+\[
+\text{ShareExternal}_{it}
+    = \alpha_i + \gamma_t
+    + \lambda_1\,\text{Drought}_{it}
+    + \lambda_2\,\text{Flood}_{it}
+    + \lambda_3\,\text{Hurricane}_{it}
+    + \mathbf{\psi}'\mathbf X_{it}
+    + e_{it},
+\]
+
+where
+\(\text{ShareExternal}_{it} = \dfrac{\text{Asylum}_{it}}{\text{Asylum}_{it} + \text{IntDisp}_{it}}\)
+when total flow \textgreater{} 0.
+
+\emph{(All disaster and flow variables enter in log-or-ratio form in the
+empirical implementation; we present counts here for clarity.)}
+
+\end{document}
