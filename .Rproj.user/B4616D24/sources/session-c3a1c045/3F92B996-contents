@@ -1,0 +1,42 @@
+---
+title: "Climate Shocks and Migration Patterns"
+author: "C. Roig, Q. Yu, C. Williams"
+date: "`r format(Sys.Date())`"
+output:
+  pdf_document:
+    toc: true
+    number_sections: true
+fontsize: 11pt
+geometry: margin=1in
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 2  Data
+
+### 2.1  Population of Interest and Sample
+
+Our analysis focuses on residents of Latin America and the Caribbean (LAC) who may be displaced—internally or across borders—by climate-related natural disasters.  
+We assemble a balanced country–year panel covering **32 sovereign LAC countries** (listed in Appendix A) observed annually from **2008 through 2023**. The starting year is chosen because systematic disaster-displacement reporting by IDMC and asylum-flow reporting by UNHCR both stabilize after 2007, while EM-DAT event coverage remains complete.  
+With 16 years for each country, the final dataset contains **512 country-year observations** (32 × 16), providing enough time-series variation to identify both short-run (sudden-onset) and lagged (slow-onset) disaster effects on migration outcomes.
+
+```{r country-table, echo=FALSE, message=FALSE}
+library(readr); library(dplyr); library(knitr)
+countries <- read_csv("data/intermediate/countries.csv", show_col_types = FALSE)
+kable(countries %>% arrange(country_name),
+      col.names = c("ISO-3", "Country"),
+      caption = "Appendix A: LAC countries included in the panel (2008–2023)")
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
