@@ -1,0 +1,201 @@
+---
+title: "Climate Shocks and Migration Patterns"
+author: "C. Roig, Q. Yu, C. Williams"
+date: "`r format(Sys.Date())`"
+output:
+  pdf_document:
+    toc: true
+    number_sections: true
+fontsize: 11pt
+geometry: margin=1in
+---
+
+```{r setup, include=FALSE}
+
+
+```
+
+## 2  Data
+
+### 2.1  Population of Interest and Sample
+
+Our analysis focuses on residents of Latin America and the Caribbean (LAC) who may be displaced—internally or across borders—by climate-related natural disasters.  
+We assemble a balanced country–year panel covering **32 sovereign LAC countries** (listed in Appendix A) observed annually from **2008 through 2023**. The starting year is chosen because systematic disaster-displacement reporting by IDMC and asylum-flow reporting by UNHCR both stabilize after 2007, while EM-DAT event coverage remains complete.  
+With 16 years for each country, the final dataset contains **512 country-year observations** (32 × 16), providing enough time-series variation to identify both short-run (sudden-onset) and lagged (slow-onset) disaster effects on migration outcomes.
+
+```{r country-table, echo=FALSE, message=FALSE}
+library(readr)
+library(dplyr)
+library(knitr)
+
+# read the file
+countries <- read_csv("data/intermediate/countries.csv", show_col_types = FALSE)
+
+# identify the ISO column and one name column automatically
+iso_col  <- intersect(names(countries), c("iso3", "iso"))[1]
+name_col <- setdiff(names(countries), iso_col)[1]   # first non-ISO column
+
+kable(
+  countries %>% arrange(.data[[name_col]]) %>% select(all_of(c(iso_col, name_col))),
+  col.names = c("ISO-3", "Country"),
+  caption   = "Appendix A: LAC countries included in the panel (2008–2023)"
+)
+
+
+```
+
+### 2.2 Data Sources
+
+We integrate five complementary datasets to capture disaster exposure, forced-movement flows, and macro-socio-economic context (Table 1). All sources provide annual country-level data and cover the full 2008–2023 study window.
+
+
+
+```{r pressure, echo=FALSE}
+library(tibble); library(knitr)
+data_sources <- tribble(
+  ~Dataset,                   ~"Temporal Coverage", ~"Key Variables (this study)",                                           ~"Original Freq.",
+  "EM-DAT – CRED",            "2008–2023",          "Events, deaths, affected (drought / flood / hurricane)",               "Event → Year",
+  "IDMC",                     "2008–2023",          "New internal displacements (hazard-specific)",                         "Event → Year",
+  "UNHCR Asylum",             "2008–2023",          "Asylum applications by country of origin",                             "Annual",
+  "World Bank WDI",           "2008–2023",          "GDP pc, agriculture VA %, unemployment %, remittances % GDP, population, Gini", "Annual",
+  "UN DESA (placeholder)",    "2020 snapshot",      "Migrant stock in U.S. / Spain (diaspora proxy – pending parse)",       "5-year"
+)
+kable(data_sources, caption = "Table 1: Primary data sources and variables used")
+
+```
+
+*Brief source descriptions:* **EM-DAT** records individual disaster events worldwide; we keep events tagged *Drought*, *Flood*, and *Storm* and flag hurricanes via subtype keywords (“hurricane”, “tropical cyclone”, etc.). **IDMC** reports *new* internal displacements for each disaster, which we aggregate by country–year and hazard. **UNHCR** supplies annual asylum-application counts by country of origin, summed across all destinations. **World Bank WDI** contributes socio-economic controls—constant-price GDP per capita, agriculture value-added %, unemployment %, remittances % GDP, population, and (where available) the Gini index. **UN DESA** migrant-stock data will later proxy diaspora networks; columns are currently retained as placeholders pending full parse.
+
+### 2.3  Data Cleaning and Merging
+
+We harmonise the five sources into a balanced panel through four key steps:
+
+1. **Master skeleton.** We generate a country–year grid (`32 countries × 2008–2023`) to ensure every observation is represented, even if a source reports zero events.
+
+2. **Source-specific filtering & aggregation.**  
+   - *EM-DAT*: keep LAC ISO-3 codes; aggregate event counts, deaths, and affected people by hazard and year.  
+   - *IDMC*: drop the metadata header row, parse numeric displacement counts, map hazards (Storm → hurricane), aggregate to yearly totals.  
+   - *UNHCR*: verify “Country of Origin” dimension, sum asylum applications across destinations per origin-year.  
+   - *WDI*: convert ISO-2 to ISO-3, select controls, keep study years.  
+   - *UN DESA*: placeholder columns (`diaspora_US`, `diaspora_ESP`) are merged but currently NAs.
+
+3. **Sequential left-joins.** We merge each tidy dataset onto the skeleton in the order **EM-DAT → IDMC → UNHCR → WDI → DESA**, replacing missing *count* variables with 0 yet leaving socio-economic controls as NA for later imputation or flagging.
+
+4. **Constructed variables.** After merging we compute totals (e.g., `total_events`, `total_int_disp`), per-capita flows (`*_pc100k`), log-transforms (`log1p`) to handle zero inflation, lagged disaster measures, and preliminary drought-persistence indicators. The resulting file, `panel_merged_wide.csv`, contains 512 balanced observations with all variables ready for econometric analysis.
+
+### 2.4  Constructed Variables
+
+From the merged panel we derive five families of analysis-ready variables.  
+*Hazard frequency & impact:* `events_drought`, `events_flood`, `events_hurricane`, plus corresponding `deaths_*` and `affected_*`.  
+*Displacement outcomes:* `int_disp_drought`, `int_disp_flood`, `int_disp_hurricane`; their sum, `total_int_disp`; and `asylum_apps`, the flow of international protection seekers.  
+*Scaling & ratios:* per-capita flows (`asylum_apps_pc100k`, `int_disp_total_pc100k`), hazard-impact intensities (`affected_*_pc`, `deaths_*_pc`), the external-movement share `share_external`, and the log ratio `log_ext_int_ratio`.  
+*Transformations & dynamics:* log(1 + x) versions of key counts, one-year lags (`lag_*`) for migration and disaster variables, and a preliminary drought-persistence metric (`drought_spell_len`, counting consecutive drought years).  
+*Controls:* constant-price GDP per capita (`gdp_pc_const`), agriculture VA % GDP, unemployment %, remittances % GDP, population (for scaling only), and the Gini index (with a missingness flag for robustness).
+
+### 2.5  Linking Data to the Research Hypotheses
+
+These variables map directly onto our hypotheses.  **H1 (slow-onset ↦ cross-border):** persistent drought measures (`events_drought`, `drought_spell_len`) should raise international flows (`log_asylum_apps`) more than internal displacement, and increase `share_external`.  **H2 (sudden-onset ↦ internal):** flood and hurricane counts or affected-population rates are expected to spike `log_int_disp_total` contemporaneously but have weaker or short-lived effects on asylum seeking.  Socio-economic controls absorb macro shocks, while country and year fixed effects net out unobserved heterogeneity and global trends, allowing coefficients on hazard variables to capture the differential push factors our study seeks to quantify.
+
+## 2.6 Descriptive Statistics
+
+```{r summary-stats, echo=FALSE, message=FALSE}
+library(readr); library(dplyr); library(tidyr); library(knitr); library(ggplot2)
+
+panel <- read_csv("data/processed/panel_merged_wide.csv", show_col_types = FALSE)
+
+# variables to display
+vars <- panel %>%
+  select(
+    asylum_apps, total_int_disp,
+    events_drought, events_flood, events_hurricane,
+    gdp_pc_const, agri_va_pct, unemp_rate, remit_gdp_pct
+  )
+
+# build tidy summary
+sumtab <- vars %>%
+  summarise(across(everything(),
+                   list(Mean = ~mean(. ,na.rm=TRUE),
+                        SD   = ~sd(. ,na.rm=TRUE),
+                        Min  = ~min(., na.rm=TRUE),
+                        Max  = ~max(., na.rm=TRUE)),
+                   .names = "{.col}_{.fn}")) %>%
+  pivot_longer(everything(),
+               names_to = c("Variable", ".value"),
+               names_sep = "_")
+
+kable(sumtab, digits = 2,
+      caption = "Table 2: Summary statistics (2008–2023, N = 512)")
+
+# regional flow trends plot
+panel_long <- panel %>%
+  group_by(year) %>%
+  summarise(asylum = sum(asylum_apps, na.rm=TRUE),
+            int_disp = sum(total_int_disp, na.rm=TRUE),
+            .groups="drop") %>%
+  pivot_longer(-year, names_to = "type", values_to = "count")
+
+ggplot(panel_long, aes(year, count/1e5, colour = type)) +
+  geom_line(size = 1) +
+  labs(y = "Count (hundreds of thousands)",
+       colour = "", title = "Figure 1: Regional migration flows, 2008–2023") +
+  theme_minimal()
+
+```
+
+## 3 Econometric Framework (the Model)
+
+We estimate fixed-effects panel regressions to disentangle the effects of slow- versus sudden-onset disasters on (i) cross-border asylum outflows and (ii) internal disaster displacements.  
+The two baseline equations are:
+
+\[
+\begin{aligned}
+\textsf{(A) International migration:}\qquad
+\ln\!\bigl(1+\text{Asylum}_{it}\bigr)
+      &= \alpha_i + \gamma_t
+      + \beta_1\,\text{Drought}_{it}
+      + \beta_2\,\text{Flood}_{it}
+      + \beta_3\,\text{Hurricane}_{it}
+      + \mathbf{\delta}'\mathbf X_{it}
+      + \varepsilon_{it},\\[6pt]
+\textsf{(B) Internal displacement:}\qquad
+\ln\!\bigl(1+\text{IntDisp}_{it}\bigr)
+      &= \alpha_i + \gamma_t
+      + \theta_1\,\text{Drought}_{it}
+      + \theta_2\,\text{Flood}_{it}
+      + \theta_3\,\text{Hurricane}_{it}
+      + \mathbf{\phi}'\mathbf X_{it}
+      + u_{it},
+\end{aligned}
+\]
+
+where:
+
+* \(i\) indexes country, \(t\) indexes year (2008 – 2023).  
+* \(\alpha_i\) = country fixed effects; \(\gamma_t\) = year fixed effects.  
+* \(\text{Asylum}_{it}\) = annual asylum-application outflow;  
+  \(\text{IntDisp}_{it}\) = new internal displacements.  
+* Disaster regressors are annual **event counts**  
+  \(\text{Drought}_{it}, \text{Flood}_{it}, \text{Hurricane}_{it}\);  
+  robustness checks will swap in affected-population rates and lagged drought persistence.  
+* \(\mathbf X_{it}\) = vector of controls  
+  \(\bigl[\ln(\text{GDPpc}),\; \text{Agriculture VA \%},\; \text{Unemployment \%},\; \text{Remittances \% GDP},\; \text{Gini} \bigr]\).  
+* Errors \(\varepsilon_{it}, u_{it}\) are clustered at the country level.
+
+> **Identification logic.** Country FEs absorb time-invariant exposure (e.g., geography, institutions); year FEs absorb region-wide shocks (e.g., global commodity prices). Remaining variation in disaster counts is plausibly exogenous conditional on these effects and controls, allowing \(\beta_k\) and \(\theta_k\) to capture differential migration responses to each hazard type.
+
+A complementary specification models the *relative* outcome:
+
+\[
+\text{ShareExternal}_{it}
+    = \alpha_i + \gamma_t
+    + \lambda_1\,\text{Drought}_{it}
+    + \lambda_2\,\text{Flood}_{it}
+    + \lambda_3\,\text{Hurricane}_{it}
+    + \mathbf{\psi}'\mathbf X_{it}
+    + e_{it},
+\]
+
+where \(\text{ShareExternal}_{it} = \dfrac{\text{Asylum}_{it}}{\text{Asylum}_{it} + \text{IntDisp}_{it}}\) when total flow > 0.
+
+*(All disaster and flow variables enter in log-or-ratio form in the empirical implementation; we present counts here for clarity.)*
+
