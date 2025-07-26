@@ -1,0 +1,26 @@
+{
+    "id": "A192F28B",
+    "path": "C:/Users/yuqiu/OneDrive/Desktop/School/2025Summer/Econ1620/project/climate_shocks/scripts/01_process_raw.R",
+    "project_path": "scripts/01_process_raw.R",
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1752976469289.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "24,1",
+        "scrollLine": "0"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1753068529,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1753068529413,
+    "read_only": false,
+    "read_only_alternatives": []
+}

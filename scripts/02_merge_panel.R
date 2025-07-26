@@ -78,29 +78,37 @@ asyl_wide <- asyl %>%
   mutate(year = as.integer(year))
 
 # ------------------------------------------------------------------
-# 6. World Bank indicators
-# ------------------------------------------------------------------
+# 6. World Bank indicators (simpler & robust)
 wb_tidy <- wb %>%
-  rename(iso = iso2c, iso3c = iso3c) %>%
-  mutate(iso = toupper(if_else(is.na(iso3c), iso, iso3c))) %>%
-  select(iso, year,
-         gdp_pc_const = gdp_pc_const,
-         agri_va_pct  = agri_va_pct,
-         unemp_rate   = unemp_rate,
-         remit_gdp_pct= remit_gdp_pct,
-         population   = population,
-         gini_index   = gini_index) %>%
-  filter(iso %in% lac_iso3, year %in% years) %>%
-  group_by(iso, year) %>%
-  summarise(across(-group_cols(), ~ dplyr::first(na.omit(.x))), .groups="drop")
+  # WDI typically gives: iso2c, country, year, <indicators>, iso3c
+  mutate(
+    iso_final = dplyr::coalesce(iso3c, iso2c),  # prefer iso3c if present
+    iso_final = toupper(iso_final)
+  ) %>%
+  select(
+    iso = iso_final,
+    year,
+    gdp_pc_const,
+    agri_va_pct,
+    unemp_rate,
+    remit_gdp_pct,
+    population,
+    gini_index
+  ) %>%
+  filter(iso %in% lac_iso3, year %in% years)
 
+
+# ------------------------------------------------------------------
 # ------------------------------------------------------------------
 # 7. Diaspora
 # ------------------------------------------------------------------
 if(!is.null(diasp)){
-  diaspora_wide <- diasp
+  diaspora_wide <- diasp %>%
+    rename(iso = iso3) %>%              # <-- key rename
+    mutate(year = as.integer(year))
 } else {
-  diaspora_wide <- panel_skel %>% mutate(diaspora_US = NA_real_, diaspora_ESP = NA_real_)
+  diaspora_wide <- panel_skel %>%
+    mutate(diaspora_US = NA_real_, diaspora_ESP = NA_real_)
 }
 
 # ------------------------------------------------------------------
@@ -108,10 +116,12 @@ if(!is.null(diasp)){
 # ------------------------------------------------------------------
 panel <- panel_skel %>%
   left_join(emdat_wide, by = c("iso","year")) %>%
-  left_join(idmc_wide, by = c("iso","year")) %>%
-  left_join(asyl_wide, by = c("iso","year")) %>%
-  left_join(wb_tidy, by = c("iso","year")) %>%
+  left_join(idmc_wide,  by = c("iso","year")) %>%
+  left_join(asyl_wide,  by = c("iso","year")) %>%
+  left_join(wb_tidy,    by = c("iso","year")) %>%
   left_join(diaspora_wide, by = c("iso","year"))
+
+
 
 # Replace missing event/displacement counts with 0
 count_cols <- grep("^(events_|deaths_|affected_|int_disp_)", names(panel), value=TRUE)

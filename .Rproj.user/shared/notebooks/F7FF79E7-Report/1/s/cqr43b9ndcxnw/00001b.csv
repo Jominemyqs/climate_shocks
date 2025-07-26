@@ -1,0 +1,7 @@
+"0",""
+"0","# Optional: residual diagnostics plot (comment out if knitting to PDF without graphics space)"
+"0","# par(mfrow = c(2,2)); plot(model)"
+"0",""
+"0","# Save regression results if needed"
+"0","# write.csv(tidy(model), ""output/regression_results_ols_preview.csv"", row.names = FALSE)"
+"0",""

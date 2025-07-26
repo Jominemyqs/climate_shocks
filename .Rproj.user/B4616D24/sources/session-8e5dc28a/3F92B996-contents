@@ -1,0 +1,328 @@
+---
+title: "Climate Shocks and Migration Patterns: Evidence from Natural Disasters"
+author: "C. Roig, Q. Yu, C. Williams"
+date: "`r format(Sys.Date())`"
+output:
+  pdf_document:
+    toc: true
+    number_sections: true
+fontsize: 11pt
+geometry: margin=1in
+---
+
+```{r setup, include=FALSE}
+
+
+```
+
+
+
+# Abstract
+This study examines how climate-related natural disasters influence migration patterns in Latin America and the Caribbean, focusing on the differential effects of sudden-onset versus slow-onset events. Using data from the EM-DAT disaster database, the Internal Displacement Monitoring Centre (IDMC), UNHCR, and the World Bank’s World Development Indicators, we construct a panel of country–year observations. We analyze how disaster events affect both internal displacement and international migration. Using descriptive statistics, hypothesis testing, and multiple linear regression, we find that sudden-onset disasters are associated with short‑term increases in internal displacement, while slow‑onset disasters are more strongly linked to international (cross‑border) movement.
+
+**Keywords:** Climate migration; natural disasters; displacement; asylum/migration; Latin America and the Caribbean
+
+# Introduction
+Climate change is an increasingly imperative problem that has taken priority in policy discussions across the world. In particular, climate change has been a catalyst for human displacement, especially in regions prone to extreme weather disasters and environmental stressors such as Latin America and the Caribbean. This region is especially vulnerable to sudden‑onset disasters (e.g., hurricanes) and slow‑onset events (e.g., droughts) that threaten livelihoods and community resilience. Although global estimates predict over 200 million climate migrants by 2050, empirical understanding of whether people relocate internally versus across borders remains limited. Hence, this study explores these dynamics by disaggregating disaster type and migration destination, focusing on Latin America and the Caribbean between 2008 and 2022.
+
+## Why this topic?
+This research is imperative given worsening climate conditions, with increasing frequency and severity of climate events due to global warming—especially in climate‑vulnerable LAC countries. Disaster exposure varies widely across the region, from hurricane‑prone to drought‑affected contexts. As humanitarian organizations plan for climate resilience and disaster response, understanding how different disaster types shape migration outcomes is critical. International migration and internal displacement create very different challenges for legal status, housing, and service provision. We therefore examine how the **type and pace** of disaster matters: sudden disasters like hurricanes may produce more immediate but short‑term internal displacement, while slow‑onset disasters can erode quality of life—particularly in agriculture‑dependent communities—pushing more permanent moves abroad to seek stability. Ultimately, this analysis clarifies how climate change drives migration patterns in different ways across disaster types. Policymakers and NGOs need to know how different disaster profiles shape climate‑driven migration.
+
+## Literature Review
+A growing literature explores the relationship between climate shocks and migration, but findings are context‑dependent. Micro‑level studies show that climate shocks already shape household mobility decisions across diverse contexts. A 1% climate‑induced fall in U.S. crop yields raises county out‑migration by about 0.17% (Feng et al., 2012), while Bangladeshi households hit by harvest losses—not floods—are the most likely to move, typically over short distances (Gray & Mueller, 2012). These studies emphasize that the economic consequences of slow‑onset disasters can gradually erode livelihoods over time. In Central America, one‑standard‑deviation drier growing seasons correlate with a 70% surge in family apprehensions at the U.S. border (Linke et al., 2023), underscoring how slow‑onset drought can turn internal strain into cross‑border flight—particularly via food insecurity in agriculture‑dependent areas.  
+Macro evidence is more mixed. A 166‑country gravity panel finds no universal link between gradual temperature change and emigration, but sudden disasters appear to push people first toward home‑country cities and then abroad as economic pressures mount (Beine & Parsons, 2015). The World Migration Report 2024 notes that LAC’s overseas migrant stock more than doubled between 1990 and 2020, whereas intra‑regional stocks stagnated, suggesting limited domestic absorptive capacity after repeated shocks (IOM, 2024). Humanitarian briefs echo that pattern: IOM’s 2025 Caribbean plan prioritizes shelter and cash for hurricane‑displaced islanders but also calls for expanded labor‑migration channels (IOM, 2025), and city‑level modeling projects up to 10 million additional climate‑driven in‑migrants to Mexican and Central‑American urban areas by 2050 without new finance (Saliba & Zanuso, 2022). These findings suggest that national‑level conditions (such as infrastructure) shape how climate stress translates into migration.  
+The health and social costs of such mobility are mounting. Systematic evidence links recurring droughts, floods, and heat waves to higher infectious‑disease risk and mental‑health burdens among both migrants and host communities across LAC (Batista et al., 2024). Conceptually, environmental drivers act in concert with economic, political, and social forces; Black et al.’s five‑factor framework remains the dominant lens (Black et al., 2011). A recent scoping review finds that return migration within LAC is under‑researched and rarely linked to climate conditions at origin (Fernández‑Sánchez et al., 2022). This aligns with our approach: we aim to understand national context and its influence on whether climate shocks result in internal displacement or international migration.
+
+## Research Expectations
+This project advances the literature by:  
+- Creating a separation between **sudden‑onset** and **slow‑onset** disasters.  
+- Distinguishing **internal displacement** (IDMC) from **international migration** (asylum applications).  
+- Examining how disaster type influences migration pathways.
+
+## Objectives
+**General objective:** Explore how disaster type correlates with internal and international migration in Latin America.  
+**Specific objectives:**  
+1. Test whether sudden‑onset disasters drive rapid rises in internal displacement.  
+2. Assess whether slow‑onset disasters are more closely related to international migration.  
+3. Examine how national characteristics (e.g., economic structure) mediate these effects.  
+4. Use descriptive analysis and regression to generate evidence for policy and humanitarian planning.
+
+
+
+# Data
+
+## Population of Interest and Sample
+
+Our analysis focuses on residents of Latin America and the Caribbean (LAC) who may be displaced—internally or across borders—by climate-related natural disasters.  
+We assemble a balanced country–year panel covering **32 sovereign LAC countries** (listed in Appendix A) observed annually from **2008 through 2023**. The starting year is chosen because systematic disaster-displacement reporting by IDMC and asylum-flow reporting by UNHCR both stabilize after 2007, while EM-DAT event coverage remains complete.  
+With 16 years for each country, the final dataset contains **512 country-year observations** (32 × 16), providing enough time-series variation to identify both short-run (sudden-onset) and lagged (slow-onset) disaster effects on migration outcomes.
+
+```{r country-table, echo=FALSE, message=FALSE}
+library(readr)
+library(dplyr)
+library(knitr)
+
+# read the file
+countries <- read_csv("data/intermediate/countries.csv", show_col_types = FALSE)
+
+# identify the ISO column and one name column automatically
+iso_col  <- intersect(names(countries), c("iso3", "iso"))[1]
+name_col <- setdiff(names(countries), iso_col)[1]   # first non-ISO column
+
+kable(
+  countries %>% arrange(.data[[name_col]]) %>% select(all_of(c(iso_col, name_col))),
+  col.names = c("ISO-3", "Country"),
+  caption   = "Appendix A: LAC countries included in the panel (2008–2023)"
+)
+
+
+```
+
+## Data Sources
+
+We integrate five complementary datasets to capture disaster exposure, forced-movement flows, and macro-socio-economic context (Table 1). All sources provide annual country-level data and cover the full 2008–2023 study window.
+
+
+
+```{r pressure, echo=FALSE}
+library(tibble); library(knitr)
+data_sources <- tribble(
+  ~Dataset,                   ~"Temporal Coverage", ~"Key Variables (this study)",                                           ~"Original Freq.",
+  "EM-DAT – CRED",            "2008–2023",          "Events, deaths, affected (drought / flood / hurricane)",               "Event → Year",
+  "IDMC",                     "2008–2023",          "New internal displacements (hazard-specific)",                         "Event → Year",
+  "UNHCR Asylum",             "2008–2023",          "Asylum applications by country of origin",                             "Annual",
+  "World Bank WDI",           "2008–2023",          "GDP pc, agriculture VA %, unemployment %, remittances % GDP, population, Gini", "Annual",
+  "UN DESA (placeholder)",    "2020 snapshot",      "Migrant stock in U.S. / Spain (diaspora proxy – pending parse)",       "5-year"
+)
+knitr::kable(data_sources, caption = "Primary data sources and variables used")
+
+```
+
+*Brief source descriptions:* **EM-DAT** records individual disaster events worldwide; we keep events tagged *Drought*, *Flood*, and *Storm* and flag hurricanes via subtype keywords (“hurricane”, “tropical cyclone”, etc.). **IDMC** reports *new* internal displacements for each disaster, which we aggregate by country–year and hazard. **UNHCR** supplies annual asylum-application counts by country of origin, summed across all destinations. **World Bank WDI** contributes socio-economic controls—constant-price GDP per capita, agriculture value-added %, unemployment %, remittances % GDP, population, and (where available) the Gini index. **UN DESA** migrant-stock data will later proxy diaspora networks; columns are currently retained as placeholders pending full parse.
+
+## Data Cleaning and Merging
+
+We harmonise the five sources into a balanced panel through four key steps:
+
+1. **Master skeleton.** We generate a country–year grid (`32 countries × 2008–2023`) to ensure every observation is represented, even if a source reports zero events.
+
+2. **Source-specific filtering & aggregation.**  
+   - *EM-DAT*: keep LAC ISO-3 codes; aggregate event counts, deaths, and affected people by hazard and year.  
+   - *IDMC*: drop the metadata header row, parse numeric displacement counts, map hazards (Storm → hurricane), aggregate to yearly totals.  
+   - *UNHCR*: verify “Country of Origin” dimension, sum asylum applications across destinations per origin-year.  
+   - *WDI*: convert ISO-2 to ISO-3, select controls, keep study years.  
+   - *UN DESA*: placeholder columns (`diaspora_US`, `diaspora_ESP`) are merged but currently NAs.
+
+3. **Sequential left-joins.** We merge each tidy dataset onto the skeleton in the order **EM-DAT → IDMC → UNHCR → WDI → DESA**, replacing missing *count* variables with 0 yet leaving socio-economic controls as NA for later imputation or flagging.
+
+4. **Constructed variables.** After merging we compute totals (e.g., `total_events`, `total_int_disp`), per-capita flows (`*_pc100k`), log-transforms (`log1p`) to handle zero inflation, lagged disaster measures, and preliminary drought-persistence indicators. The resulting file, `panel_merged_wide.csv`, contains 512 balanced observations with all variables ready for econometric analysis.
+
+## Constructed Variables
+
+From the merged panel we derive five families of analysis-ready variables.  
+*Hazard frequency & impact:* `events_drought`, `events_flood`, `events_hurricane`, plus corresponding `deaths_*` and `affected_*`.  
+*Displacement outcomes:* `int_disp_drought`, `int_disp_flood`, `int_disp_hurricane`; their sum, `total_int_disp`; and `asylum_apps`, the flow of international protection seekers.  
+*Scaling & ratios:* per-capita flows (`asylum_apps_pc100k`, `int_disp_total_pc100k`), hazard-impact intensities (`affected_*_pc`, `deaths_*_pc`), the external-movement share `share_external`, and the log ratio `log_ext_int_ratio`.  
+*Transformations & dynamics:* log(1 + x) versions of key counts, one-year lags (`lag_*`) for migration and disaster variables, and a preliminary drought-persistence metric (`drought_spell_len`, counting consecutive drought years).  
+*Controls:* constant-price GDP per capita (`gdp_pc_const`), agriculture VA % GDP, unemployment %, remittances % GDP, population (for scaling only), and the Gini index (with a missingness flag for robustness).
+
+## Linking Data to the Research Hypotheses
+
+These variables map directly onto our hypotheses.  **H1 (slow-onset to cross-border):** persistent drought measures (`events_drought`, `drought_spell_len`) should raise international flows (`log_asylum_apps`) more than internal displacement, and increase `share_external`.  **H2 (sudden-onset to internal):** flood and hurricane counts or affected-population rates are expected to spike `log_int_disp_total` contemporaneously but have weaker or short-lived effects on asylum seeking.  Socio-economic controls absorb macro shocks, while country and year fixed effects net out unobserved heterogeneity and global trends, allowing coefficients on hazard variables to capture the differential push factors our study seeks to quantify.
+
+# Descriptive Statistics
+
+```{r summary-stats, echo=FALSE, message=FALSE, warning=FALSE}
+library(readr); library(dplyr); library(tidyr); library(knitr); library(ggplot2)
+
+panel <- read_csv("data/processed/panel_merged_wide.csv", show_col_types = FALSE)
+
+# variables to display
+vars <- panel %>%
+  select(
+    asylum_apps, total_int_disp,
+    events_drought, events_flood, events_hurricane,
+    gdp_pc_const, agri_va_pct, unemp_rate, remit_gdp_pct
+  )
+
+# build tidy summary
+sumtab <- vars %>%
+  summarise(across(everything(),
+                   list(Mean = ~mean(. ,na.rm=TRUE),
+                        SD   = ~sd(. ,na.rm=TRUE),
+                        Min  = ~min(., na.rm=TRUE),
+                        Max  = ~max(., na.rm=TRUE)),
+                   .names = "{.col}_{.fn}")) %>%
+  pivot_longer(everything(),
+               names_to = c("Variable", ".value"),
+               names_sep = "_")
+
+kable(sumtab, digits = 2,
+      caption = "Table 2: Summary statistics (2008–2023, N = 512)")
+
+# regional flow trends plot
+panel_long <- panel %>%
+  group_by(year) %>%
+  summarise(asylum = sum(asylum_apps, na.rm=TRUE),
+            int_disp = sum(total_int_disp, na.rm=TRUE),
+            .groups="drop") %>%
+  pivot_longer(-year, names_to = "type", values_to = "count")
+
+ggplot(panel_long, aes(year, count/1e5, colour = type)) +
+  geom_line(linewidth = 1) +
+  labs(y = "Count (hundreds of thousands)",
+       colour = "", title = "Figure 1: Regional migration flows, 2008–2023") +
+  theme_minimal()
+
+```
+
+
+# Methodology
+
+This study combines descriptive and inferential statistical techniques to explore how climate-related natural disasters affect migration patterns in Latin America and the Caribbean. We test whether sudden-onset disasters as well as slow-onset disasters so that we can see the impact they have on internal displacement and international migration.
+
+## Hypotheses
+## Hypotheses
+- **H1 (sudden‑onset → internal)**  
+  **H1 0:** Flood/hurricane event counts have no effect on internal displacement.  
+  **H1 1:** Flood/hurricane event counts **increase** internal displacement contemporaneously.
+
+- **H2 (slow‑onset → international)**  
+  **H2 0:** Drought event counts (current or lagged) have no effect on asylum applications.  
+  **H2 1:** Drought event counts—especially **lagged**—**increase** asylum applications.
+
+
+# Inferential Statistics
+
+```{r inferential-fixed, echo=FALSE, message=FALSE, warning=FALSE}
+library(readr); library(dplyr); library(tidyr); library(knitr); library(ggplot2); library(broom)
+
+# Use the unified panel you already created
+# (created by scripts/02_merge_panel.R)
+panel <- read_csv("data/processed/panel_merged_wide.csv", show_col_types = FALSE)
+
+# ---------- 5.1 Confidence intervals for key outcomes ----------
+mean_ci <- function(x){
+  x <- x[is.finite(x)]
+  n <- length(x); m <- mean(x); s <- sd(x)
+  se <- s / sqrt(n); tcrit <- qt(.975, df = n - 1)
+  tibble(N = n, Mean = m, SD = s,
+         `CI 95% Lower` = m - tcrit*se,
+         `CI 95% Upper` = m + tcrit*se)
+}
+
+ci_tbl <- bind_rows(
+  Asylum_Applications   = mean_ci(panel$asylum_apps),
+  Internal_Displacement = mean_ci(panel$total_int_disp)
+) |>
+  dplyr::mutate(Variable = c("Asylum applications", "Total internal displacements"),
+                .before = 1) |>
+  select(Variable, everything())
+
+kable(ci_tbl, digits = 2,
+      caption = "Table: 95% confidence intervals for mean outcomes (pooled, N = 512).")
+
+# ---------- 5.2 Difference-in-means tests aligned to H1 and H2 ----------
+panel <- panel %>%
+  mutate(
+    sudden_onset_year = as.integer(coalesce(events_flood,0) + coalesce(events_hurricane,0) > 0),
+    drought_year      = as.integer(coalesce(events_drought,0) > 0)
+  )
+
+t_intdisp <- t.test(total_int_disp ~ sudden_onset_year, data = panel)
+t_asylum  <- t.test(asylum_apps     ~ drought_year,     data = panel)
+
+ttab <- tibble(
+  Test = c("Internal displacement: sudden-onset year vs none",
+           "Asylum applications: drought year vs none"),
+  `Group means` = c(
+    sprintf("%.0f vs %.0f",
+            mean(panel$total_int_disp[panel$sudden_onset_year==1], na.rm=TRUE),
+            mean(panel$total_int_disp[panel$sudden_onset_year==0], na.rm=TRUE)),
+    sprintf("%.0f vs %.0f",
+            mean(panel$asylum_apps[panel$drought_year==1], na.rm=TRUE),
+            mean(panel$asylum_apps[panel$drought_year==0], na.rm=TRUE))
+  ),
+  `t-statistic` = c(unname(t_intdisp$statistic), unname(t_asylum$statistic)),
+  `p-value`     = c(unname(t_intdisp$p.value),   unname(t_asylum$p.value))
+)
+
+kable(ttab, digits = 3, caption = "Table: Simple t-tests (pooled) corresponding to H1 and H2.")
+
+# ---------- 5.3 Simple OLS preview (illustrative) ----------
+# (Keeps the spirit of your teammate's model but uses the correct dataset.)
+ols_df <- panel %>% select(asylum_apps, events_drought, events_flood, events_hurricane, gdp_pc_const)
+
+model <- lm(asylum_apps ~ events_drought + events_flood + events_hurricane + gdp_pc_const,
+            data = ols_df)
+
+kable(tidy(model), digits = 3, caption = "OLS preview: asylum applications on disasters and GDPpc (pooled).")
+
+# Optional: residual diagnostics plot (comment out if knitting to PDF without graphics space)
+# par(mfrow = c(2,2)); plot(model)
+
+# Save regression results if needed
+# write.csv(tidy(model), "output/regression_results_ols_preview.csv", row.names = FALSE)
+
+```
+
+In order for us to be able to estimate how the number of flood, drought, and hurricane disasters impacted the internal displacement rate, we ran a multiple linear regression. This model ended up showing us that even though the overall explanatory power is modest (R² approximately equals to 0.08), this disaster count is heavily related to the displacement patterns. Out of these disasters, floods and hurricanes specifically have a significant positive relationship with the internal displacement, while disasters like droughts isn’t as significant. The 95% confidence intervals tell us that effects of hurricanes and floods we suspect back the notion that they are robust, however the intercept term isn’t significant. Altogether this can show us that sudden-onset disasters have a greater chance of causing short-term international migration in comparison to its counterpart slow-onset disasters such as droughts.
+
+
+# Econometric Framework (the Model)
+
+We estimate fixed-effects panel regressions to disentangle the effects of slow- versus sudden-onset disasters on (i) cross-border asylum outflows and (ii) internal disaster displacements.  
+The two baseline equations are:
+
+\[
+\begin{aligned}
+\textsf{(A) International migration:}\qquad
+\ln\!\bigl(1+\text{Asylum}_{it}\bigr)
+      &= \alpha_i + \gamma_t
+      + \beta_1\,\text{Drought}_{it}
+      + \beta_2\,\text{Flood}_{it}
+      + \beta_3\,\text{Hurricane}_{it}
+      + \mathbf{\delta}'\mathbf X_{it}
+      + \varepsilon_{it},\\[6pt]
+\textsf{(B) Internal displacement:}\qquad
+\ln\!\bigl(1+\text{IntDisp}_{it}\bigr)
+      &= \alpha_i + \gamma_t
+      + \theta_1\,\text{Drought}_{it}
+      + \theta_2\,\text{Flood}_{it}
+      + \theta_3\,\text{Hurricane}_{it}
+      + \mathbf{\phi}'\mathbf X_{it}
+      + u_{it},
+\end{aligned}
+\]
+
+where:
+
+* \(i\) indexes country, \(t\) indexes year (2008 – 2023).  
+* \(\alpha_i\) = country fixed effects; \(\gamma_t\) = year fixed effects.  
+* \(\text{Asylum}_{it}\) = annual asylum-application outflow;  
+  \(\text{IntDisp}_{it}\) = new internal displacements.  
+* Disaster regressors are annual **event counts**  
+  \(\text{Drought}_{it}, \text{Flood}_{it}, \text{Hurricane}_{it}\);  
+  robustness checks will swap in affected-population rates and lagged drought persistence.  
+* \(\mathbf X_{it}\) = vector of controls  
+  \(\bigl[\ln(\text{GDPpc}),\; \text{Agriculture VA \%},\; \text{Unemployment \%},\; \text{Remittances \% GDP},\; \text{Gini} \bigr]\).  
+* Errors \(\varepsilon_{it}, u_{it}\) are clustered at the country level.
+
+> **Identification logic.** Country FEs absorb time-invariant exposure (e.g., geography, institutions); year FEs absorb region-wide shocks (e.g., global commodity prices). Remaining variation in disaster counts is plausibly exogenous conditional on these effects and controls, allowing \(\beta_k\) and \(\theta_k\) to capture differential migration responses to each hazard type.
+
+A complementary specification models the *relative* outcome:
+
+\[
+\text{ShareExternal}_{it}
+    = \alpha_i + \gamma_t
+    + \lambda_1\,\text{Drought}_{it}
+    + \lambda_2\,\text{Flood}_{it}
+    + \lambda_3\,\text{Hurricane}_{it}
+    + \mathbf{\psi}'\mathbf X_{it}
+    + e_{it},
+\]
+
+where \(\text{ShareExternal}_{it} = \dfrac{\text{Asylum}_{it}}{\text{Asylum}_{it} + \text{IntDisp}_{it}}\) when total flow > 0.
+
+*(All disaster and flow variables enter in log-or-ratio form in the empirical implementation; we present counts here for clarity.)*
+

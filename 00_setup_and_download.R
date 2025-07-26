@@ -64,6 +64,14 @@ append_log <- function(file, source, notes=""){
 }
 
 # ----------------------------- 5. World Bank indicators -----------------------
+# Install & load WDI if needed
+if(!requireNamespace("WDI", quietly = TRUE)) install.packages("WDI")
+library(WDI)
+
+# LAC ISO3 list (reuse existing file)
+lac_iso3 <- readr::read_csv("data/intermediate/countries.csv", show_col_types = FALSE)$iso3
+years <- 2008:2023
+
 wb_indicators <- c(
   gdp_pc_const = "NY.GDP.PCAP.KD",
   agri_va_pct  = "NV.AGR.TOTL.ZS",
@@ -73,13 +81,18 @@ wb_indicators <- c(
   gini_index   = "SI.POV.GINI"
 )
 
-wb_raw <- WDI(country = lac_iso3, indicator = wb_indicators,
-              start = min(years), end = max(years), extra = FALSE)
+wb_raw <- WDI(country = lac_iso3,
+              indicator = wb_indicators,
+              start = min(years),
+              end   = max(years),
+              extra = FALSE)  # no extra cols needed
 
-write_csv(wb_raw, "data/raw/worldbank_indicators.csv")
-append_log("data/raw/worldbank_indicators.csv",
-           "World Bank WDI API",
-           "Indicators: gdp_pc_const, agri_va_pct, unemp_rate, remit_gdp_pct, population, gini_index")
+# Make sure directory exists
+dir.create("data/raw", showWarnings = FALSE)
+
+readr::write_csv(wb_raw, "data/raw/worldbank_indicators.csv")
+message("Saved World Bank indicators to data/raw/worldbank_indicators.csv (rows: ", nrow(wb_raw), ")")
+
 
 # ----------------------------- 6. Helper: manual file logging -----------------
 # Use this function AFTER you manually download & place each file into data/raw/.
