@@ -3,7 +3,7 @@
     "path": "C:/Users/yuqiu/OneDrive/Desktop/School/2025Summer/Econ1620/project/climate_shocks/Report.Rmd",
     "project_path": "Report.Rmd",
     "type": "r_markdown",
-    "hash": "1852615007",
+    "hash": "1079845523",
     "contents": "",
     "dirty": false,
     "created": 1753053795281.0,
@@ -13,16 +13,16 @@
         "tempName": "Untitled1",
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "187,8",
-        "scrollLine": "177",
-        "last_setup_crc32": ""
+        "cursorPosition": "733,0",
+        "scrollLine": "707",
+        "last_setup_crc32": "d27009df5be3136b"
     },
     "folds": "",
-    "lastKnownWriteTime": 1753511879,
+    "lastKnownWriteTime": 1754032516,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1753511879041,
+    "last_content_update": 1754032516050,
     "read_only": false,
     "read_only_alternatives": []
 }
