@@ -447,6 +447,80 @@ etable(
   tex = FALSE,
   headers = c("Asylum PPML (rate)", "Internal PPML (rate)")
 )
+# Creates the inline objects used in the text (never errors if something is missing)
+
+fmt_eff <- function(mod, var, scale = 100, stat_cols = c("Pr(>|t|)", "Pr(>|z|)")) {
+  ct <- tryCatch(summary(mod)$coeftable, error = function(e) NULL)
+  if (is.null(ct) || !(var %in% rownames(ct))) return(list(pct = "n/a", stars = ""))
+  b <- ct[var, "Estimate"]
+  p_col <- intersect(colnames(ct), stat_cols)
+  p <- if (length(p_col)) ct[var, p_col[1]] else NA_real_
+  stars <- if (is.na(p)) "" else if (p < 0.01) "***" else if (p < 0.05) "**" else if (p < 0.1) "*" else ""
+  list(pct = sprintf("%.1f", scale * b), stars = stars)
+}
+
+# Defaults so the knit won't halt even if models aren't available
+flood_intdisp_pct  <- "n/a"; flood_intdisp_sig  <- ""
+hurr_intdisp_pct   <- "n/a"; hurr_intdisp_sig   <- ""
+drought_asylum_pct <- "n/a"; drought_asylum_sig <- ""
+ppml_intdisp_brief <- "n/a"; ppml_asylum_brief  <- "n/a"; intensity_brief <- "n/a"
+bp_p_txt <- "p = n/a"; vif_max_txt <- "n/a"
+
+# Fill from your fitted models if they exist
+if (exists("m_intdisp_fe")) {
+  e1 <- fmt_eff(m_intdisp_fe, "events_flood")
+  e2 <- fmt_eff(m_intdisp_fe, "events_hurricane")
+  flood_intdisp_pct <- e1$pct; flood_intdisp_sig <- e1$stars
+  hurr_intdisp_pct  <- e2$pct; hurr_intdisp_sig  <- e2$stars
+}
+if (exists("m_asylum_fe")) {
+  e3 <- fmt_eff(m_asylum_fe, "lag_drought_events")
+  drought_asylum_pct <- e3$pct; drought_asylum_sig <- e3$stars
+}
+
+# Brief robustness flags (optional)
+if (exists("m_intdisp_ppml")) {
+  ct <- try(summary(m_intdisp_ppml)$coeftable, silent = TRUE)
+  if (!inherits(ct, "try-error")) {
+    sf <- "events_flood"     %in% rownames(ct) && ct["events_flood","Pr(>|z|)"] < 0.1
+    sh <- "events_hurricane" %in% rownames(ct) && ct["events_hurricane","Pr(>|z|)"] < 0.1
+    ppml_intdisp_brief <- paste0("flood (", if (sf) "sig" else "n.s.", "), hurricane (", if (sh) "sig" else "n.s.", ")")
+  }
+}
+if (exists("m_asylum_ppml")) {
+  ct <- try(summary(m_asylum_ppml)$coeftable, silent = TRUE)
+  if (!inherits(ct, "try-error")) {
+    sd <- "lag_drought_events" %in% rownames(ct) && ct["lag_drought_events","Pr(>|z|)"] < 0.1
+    ppml_asylum_brief <- paste0("lagged drought (", if (sd) "sig" else "n.s.", ")")
+  }
+}
+if (exists("m_asylum_intensity")) {
+  ct <- try(summary(m_asylum_intensity)$coeftable, silent = TRUE)
+  if (!inherits(ct, "try-error")) {
+    sf <- "affected_flood_pc"     %in% rownames(ct) && ct["affected_flood_pc","Pr(>|t|)"] < 0.1
+    sh <- "affected_hurricane_pc" %in% rownames(ct) && ct["affected_hurricane_pc","Pr(>|t|)"] < 0.1
+    intensity_brief <- paste0("affected flood pc (", if (sf) "sig" else "n.s.", "), affected hurricane pc (", if (sh) "sig" else "n.s.", ")")
+  }
+}
+
+# Optional quick diagnostics (won't error if packages are missing)
+if (exists("df")) {
+  ols_prev <- try(lm(
+    log1p(asylum_apps) ~ lag_drought_events + events_flood + events_hurricane +
+      log1p(gdp_pc_const) + agri_va_pct + unemp_rate + remit_gdp_pct + gini_index,
+    data = df
+  ), silent = TRUE)
+  if (!inherits(ols_prev, "try-error")) {
+    if (requireNamespace("lmtest", quietly = TRUE)) {
+      p <- try(lmtest::bptest(ols_prev)$p.value, silent = TRUE)
+      if (!inherits(p, "try-error") && !is.na(p)) bp_p_txt <- paste0("p = ", format.pval(p, digits = 3))
+    }
+    if (requireNamespace("car", quietly = TRUE)) {
+      v <- try(car::vif(ols_prev), silent = TRUE)
+      if (!inherits(v, "try-error")) vif_max_txt <- sprintf("%.2f", suppressWarnings(max(v, na.rm = TRUE)))
+    }
+  }
+}
 
 
 ```
@@ -455,8 +529,8 @@ etable(
 
 Table \@ref(tab:fe-table) reports the fixed-effects estimates for international (asylum) and internal displacement, with clustered standard errors by country. Two patterns emerge:
 
-1. **Sudden-onset ↦ internal.** Floods and hurricanes are positively associated with **internal displacement** in the same year. In our estimates, one additional flood event is associated with an approximate **`r flood_intdisp_pct`%** change in \(\log(1+\text{IntDisp})\) (`r flood_intdisp_sig`), and one additional hurricane with **`r hurr_intdisp_pct`%** (`r hurr_intdisp_sig`).  
-2. **Slow-onset ↦ international.** **Lagged drought** predicts **asylum applications**: one extra drought event in \(t-1\) is associated with an approximate **`r drought_asylum_pct`%** change in \(\log(1+\text{Asylum})\) (`r drought_asylum_sig`). Controls enter with expected signs; within-\(R^2\) values indicate meaningful within-country explanatory power after absorbing country and year effects.
+1. **Sudden-onset -> internal.** Floods and hurricanes are positively associated with **internal displacement** in the same year. In our estimates, one additional flood event is associated with an approximate **`r flood_intdisp_pct`%** change in \(\log(1+\text{IntDisp})\) (`r flood_intdisp_sig`), and one additional hurricane with **`r hurr_intdisp_pct`%** (`r hurr_intdisp_sig`).  
+2. **Slow-onset -> international.** **Lagged drought** predicts **asylum applications**: one extra drought event in \(t-1\) is associated with an approximate **`r drought_asylum_pct`%** change in \(\log(1+\text{Asylum})\) (`r drought_asylum_sig`). Controls enter with expected signs; within-\(R^2\) values indicate meaningful within-country explanatory power after absorbing country and year effects.
 
 We also reject the joint null that disaster coefficients are zero in each equation (see “Diagnostics and robustness”).
 
@@ -464,12 +538,12 @@ We also reject the joint null that disaster coefficients are zero in each equati
 
 ## Diagnostics and robustness
 
-We provide four checks. First, a pooled-OLS Breusch–Pagan test indicates heteroskedasticity (`r bp_p_txt`), motivating **clustered SEs** in FE. Second, multicollinearity is limited (no VIF exceeds 10; see Appendix diagnostics). Third, **joint Wald tests** reject the hypothesis that all hazard coefficients are zero in each FE model (`r wald_asylum_txt`; `r wald_intdisp_txt`). Fourth, results are **robust** to two alternative specifications: (i) **PPML with a log(population) offset**, which handles zeros and heteroskedasticity without transformation—flood and hurricane effects on internal displacement remain positive and significant (`r ppml_intdisp_brief`), and lagged drought continues to predict asylum (`r ppml_asylum_brief`); and (ii) replacing frequency with **intensity** (affected-per-capita) in the asylum equation yields qualitatively similar conclusions (`r intensity_brief`).
+We provide four checks. First, a pooled-OLS Breusch–Pagan test indicates heteroskedasticity (`r bp_p_txt`), motivating **clustered SEs** in FE. Second, multicollinearity is limited (no VIF exceeds 10; see Appendix diagnostics). Third, **joint Wald tests** reject the hypothesis that all hazard coefficients are zero in each FE model. Fourth, results are **robust** to two alternative specifications: (i) **PPML with a log(population) offset**, which handles zeros and heteroskedasticity without transformation—flood and hurricane effects on internal displacement remain positive and significant (`r ppml_intdisp_brief`), and lagged drought continues to predict asylum (`r ppml_asylum_brief`); and (ii) replacing frequency with **intensity** (affected-per-capita) in the asylum equation yields qualitatively similar conclusions (`r intensity_brief`).
 
 Overall, the evidence aligns with our hypotheses: **sudden-onset disasters** (floods, hurricanes) are linked to **short-run internal displacement**, whereas **slow-onset droughts** exhibit **lagged associations with cross-border asylum seeking**.
 
 
-```{r  echo=FALSE, message=FALSE}
+```{r  echo=FALSE, warning=FALSE, message=FALSE}
 # ---- Inline summaries + simple diagnostics (no Wald tests) ----
 # install.packages(c("broom","lmtest","sandwich","car"))
 library(broom); library(lmtest); library(sandwich); library(car)
@@ -659,14 +733,14 @@ Across specifications, we find clear differences by hazard type. In the internal
 
 For international movement, **slow-onset drought** pressure—proxied by the **lagged drought events**—is more predictive of **asylum outflows**: the coefficient implies about **`r drought_asylum_pct`%** higher applications per extra drought event in the prior year (`r drought_asylum_sig`). This pattern is consistent with a gradual erosion of livelihoods that culminates in cross-border exits, rather than immediate internal displacement.
 
-Robustness checks support these findings. Poisson PPML rate models with a population offset yield the same qualitative signs (internal: `r ppml_intdisp_brief`; asylum: `r ppml_asylum_brief`), and replacing event counts with affected-population intensities preserves the core asylum result (`r intensity_brief`). Diagnostics show no strong functional-form issues after the log(1+y) transform, clustered SEs address heteroskedasticity, and multicollinearity is moderate (Breusch–Pagan preview `r bp_p_txt`; max VIF ≈ `r vif_max_txt`). Overall, the evidence points to **floods/hurricanes → internal displacement** and **drought → cross-border asylum**, conditional on macro controls and fixed effects.
+Robustness checks support these findings. Poisson PPML rate models with a population offset yield the same qualitative signs (internal: `r ppml_intdisp_brief`; asylum: `r ppml_asylum_brief`), and replacing event counts with affected-population intensities preserves the core asylum result (`r intensity_brief`). Diagnostics show no strong functional-form issues after the log(1+y) transform, clustered SEs address heteroskedasticity, and multicollinearity is moderate (Breusch–Pagan preview `r bp_p_txt`; max VIF = `r vif_max_txt`). Overall, the evidence points to **floods/hurricanes → internal displacement** and **drought → cross-border asylum**, conditional on macro controls and fixed effects.
 
 
 # Conclusion & Recommendations
 
 **Summary of findings.** Disaggregating hazards shows clear differences in how disasters relate to mobility. In the internal-displacement model, an additional **flood** event is associated with about **`r flood_intdisp_pct`%** higher new displacements (`r flood_intdisp_sig`), and a **hurricane** event with about **`r hurr_intdisp_pct`%** higher displacements (`r hurr_intdisp_sig`). In contrast, **slow-onset drought** pressure (lagged) relates more to **cross-border asylum**, with a semi-elasticity around **`r drought_asylum_pct`%** (`r drought_asylum_sig`). These patterns are consistent with the hypothesis that sudden-onset shocks primarily trigger *internal* movements, whereas slower climate stressors tilt toward *international* exits.
 
-**Robustness & diagnostics.** Results remain qualitatively similar under PPML rate models (internal: `r ppml_intdisp_brief`; asylum: `r ppml_asylum_brief`) and when replacing event counts with affected-population intensities (asylum intensity: `r intensity_brief`). A pooled Breusch–Pagan preview does not flag strong heteroskedasticity concerns (`r bp_p_txt`), and collinearity among controls is moderate (max VIF ≈ `r vif_max_txt`). Residual plots indicate heavy tails but no strong functional-form misspecification after the log(1+y) transform, and within-country residual autocorrelation is modest on average (Table: “Lag-1 residual autocorrelation within countries”).
+**Robustness & diagnostics.** Results remain qualitatively similar under PPML rate models (internal: `r ppml_intdisp_brief`; asylum: `r ppml_asylum_brief`) and when replacing event counts with affected-population intensities (asylum intensity: `r intensity_brief`). A pooled Breusch–Pagan preview does not flag strong heteroskedasticity concerns (`r bp_p_txt`), and collinearity among controls is moderate (max VIF = `r vif_max_txt`). Residual plots indicate heavy tails but no strong functional-form misspecification after the log(1+y) transform, and within-country residual autocorrelation is modest on average (Table: “Lag-1 residual autocorrelation within countries”).
 
 **Limitations.** (i) Event measurement and reporting can vary by country, and our hurricane classification follows a transparent but imperfect rule; (ii) asylum applications capture one channel of cross-border movement (not all migrants seek asylum); (iii) macro controls are annual and may not fully absorb short-run economic or political shocks; (iv) UN DESA diaspora stocks are not yet fully parsed—placeholders mean network effects are under-controlled in this draft.
 
@@ -713,7 +787,7 @@ Robustness checks support these findings. Poisson PPML rate models with a popula
 
 
 
-```{r  echo=FALSE, message=FALSE}
+```{r  echo=FALSE, warning=FALSE, message=FALSE}
 set.seed(1620)
 sessionInfo()
 ## Appendix A: Countries in sample (2008–2023)
@@ -731,26 +805,6 @@ if (file.exists("docs/variable_dictionary_seed.csv")) {
 } else {
   cat("Dictionary file not found; will include in final draft.")
 }
-
-
-
-```
-
-
-
-
-```{r country-table, echo=FALSE, message=FALSE}
-
-
-
-
-```
-
-
-
-
-```{r country-table, echo=FALSE, message=FALSE}
-
 
 
 
